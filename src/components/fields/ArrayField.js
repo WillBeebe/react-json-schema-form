@@ -18,8 +18,11 @@ import {
 } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
-import JsonSchemaForm from '../components/JsonSchemaForm';
-import { createDefaultValue, createGetItemSchema } from '../utils/schemaUtils';
+import {
+  createDefaultValue,
+  createGetItemSchema,
+} from '../../utils/schemaUtils';
+import JsonSchemaForm from '../JsonSchemaForm';
 
 const ArrayField = ({ fieldSchema, value, onChange, error }) => {
   const [expanded, setExpanded] = useState(null);

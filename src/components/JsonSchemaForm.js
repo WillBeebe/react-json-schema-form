@@ -14,7 +14,9 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { validateField, validateForm } from '../utils/validationUtils';
+import { useFormState } from '../hooks/useFormState';
+import { useFormValidation } from '../hooks/useFormValidation';
+import { pluginRegistry } from '../plugins/PluginRegistry';
 import FieldRenderer from './FieldRenderer';
 
 const StyledForm = styled('form')(({ theme }) => ({
@@ -39,12 +41,25 @@ const JsonSchemaForm = forwardRef(
       onClose,
       customComponents = {},
       isLoading = false,
+      plugins = [],
     },
     ref
   ) => {
-    const [formData, setFormData] = useState(initialData);
-    const [errors, setErrors] = useState({});
-    const [touched, setTouched] = useState({});
+    const memoizedSchema = useMemo(() => schema, [schema]);
+    const memoizedInitialData = useMemo(() => initialData, [initialData]);
+
+    const {
+      formData,
+      touched,
+      handleChange,
+      handleBlur,
+      resetForm,
+      setFormData,
+    } = useFormState(memoizedInitialData, memoizedSchema);
+
+    const { errors, isValid, validateAllFields, validateSingleField } =
+      useFormValidation(memoizedSchema, formData, touched);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [snackbar, setSnackbar] = useState({
       open: false,
@@ -53,8 +68,13 @@ const JsonSchemaForm = forwardRef(
     });
     const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
-    const memoizedSchema = useMemo(() => schema, [schema]);
-    const memoizedInitialData = useMemo(() => initialData, [initialData]);
+    // Register plugins
+    useEffect(() => {
+      plugins.forEach((plugin) => pluginRegistry.register(plugin));
+      return () => {
+        plugins.forEach((plugin) => pluginRegistry.unregister(plugin.name));
+      };
+    }, [plugins]);
 
     const defaultValues = useMemo(() => {
       const newFormData = { ...memoizedInitialData };
@@ -78,92 +98,70 @@ const JsonSchemaForm = forwardRef(
 
     useEffect(() => {
       setFormData(defaultValues);
-      setErrors({});
-      setTouched({});
+      resetForm();
       setHasAttemptedSubmit(false);
-    }, [defaultValues]);
+    }, [defaultValues, setFormData, resetForm]);
 
-    const handleChange = useCallback(
-      (name, value) => {
-        setFormData((prevData) => {
-          const newData = { ...prevData, [name]: value };
-          if (onChange) {
-            onChange(newData);
-          }
-          return newData;
-        });
-
-        // Only validate if the user has attempted to submit once
-        if (hasAttemptedSubmit) {
-          const error = validateField(memoizedSchema, name, value);
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            [name]: error,
-          }));
+    const handleSubmit = useCallback(
+      async (e) => {
+        if (e && e.preventDefault) {
+          e.preventDefault();
         }
-      },
-      [onChange, memoizedSchema, hasAttemptedSubmit]
-    );
-
-    const handleBlur = useCallback((name) => {
-      setTouched((prevTouched) => ({
-        ...prevTouched,
-        [name]: true,
-      }));
-    }, []);
-
-    const handleSubmit = async (e) => {
-      if (e && e.preventDefault) {
-        e.preventDefault();
-      }
-      setHasAttemptedSubmit(true);
-      const touchedAll = Object.keys(memoizedSchema.properties).reduce(
-        (acc, key) => {
-          acc[key] = true;
-          return acc;
-        },
-        {}
-      );
-      setTouched(touchedAll);
-
-      const validationResult = validateForm(memoizedSchema, formData);
-      if (validationResult.isValid) {
-        setIsSubmitting(true);
-        try {
-          await onSubmit(formData);
+        setHasAttemptedSubmit(true);
+        const validationResult = validateAllFields();
+        if (validationResult.isValid) {
+          setIsSubmitting(true);
+          try {
+            await onSubmit(formData);
+            setSnackbar({
+              open: true,
+              message: 'Form submitted successfully!',
+              severity: 'success',
+            });
+          } catch (error) {
+            setSnackbar({
+              open: true,
+              message: 'Error submitting form. Please try again.',
+              severity: 'error',
+            });
+          } finally {
+            setIsSubmitting(false);
+          }
+        } else {
           setSnackbar({
             open: true,
-            message: 'Form submitted successfully!',
-            severity: 'success',
-          });
-        } catch (error) {
-          setSnackbar({
-            open: true,
-            message: 'Error submitting form. Please try again.',
+            message: 'Please correct the errors in the form.',
             severity: 'error',
           });
-        } finally {
-          setIsSubmitting(false);
         }
-      } else {
-        setErrors(validationResult.errors);
-        setSnackbar({
-          open: true,
-          message: 'Please correct the errors in the form.',
-          severity: 'error',
-        });
-      }
-    };
+      },
+      [formData, validateAllFields, onSubmit]
+    );
 
     useImperativeHandle(ref, () => ({
       submit: handleSubmit,
-      validate: () => {
-        const validationResult = validateForm(memoizedSchema, formData);
-        setErrors(validationResult.errors);
-        return validationResult;
-      },
+      validate: validateAllFields,
       getData: () => formData,
     }));
+
+    const memoizedHandleChange = useCallback(
+      (name, value) => {
+        handleChange(name, value);
+        if (onChange) {
+          onChange({ ...formData, [name]: value });
+        }
+        if (hasAttemptedSubmit) {
+          validateSingleField(name, value);
+        }
+      },
+      [
+        handleChange,
+        onChange,
+        formData,
+        hasAttemptedSubmit,
+        validateSingleField,
+      ]
+    );
 
     return (
       <StyledForm onSubmit={(e) => e.preventDefault()}>
@@ -179,7 +177,7 @@ const JsonSchemaForm = forwardRef(
                   value={formData[key]}
                   error={hasAttemptedSubmit ? errors[key] : undefined}
                   touched={touched[key]}
-                  onChange={handleChange}
+                  onChange={memoizedHandleChange}
                   onBlur={handleBlur}
                   customComponents={customComponents}
                 />

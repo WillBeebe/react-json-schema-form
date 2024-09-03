@@ -1,132 +1,56 @@
-import InfoIcon from '@mui/icons-material/Info';
-import {
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  MenuItem,
-  Select,
-  Switch,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
 import React from 'react';
-import ArrayField from '../fields/ArrayField';
-import StringField from '../fields/StringField';
+import { useErrors } from '../context/ErrorContext';
+import { pluginRegistry } from '../plugins/PluginRegistry';
+import ArrayField from './fields/ArrayField';
+import BooleanField from './fields/BooleanField';
+import NumberField from './fields/NumberField';
+import ObjectField from './fields/ObjectField';
+import StringField from './fields/StringField';
 
-const FieldRenderer = ({
-  name,
-  schema,
-  fieldSchema,
-  value,
-  error,
-  onChange,
-  onBlur,
-  touched,
-  customComponents,
-}) => {
-  const isRequired = schema.required && schema.required.includes(name);
+const FieldRenderer = ({ name, schema, value, onChange, onBlur }) => {
+  const { errors } = useErrors();
+  const error = errors[name];
 
-  const commonProps = {
-    fullWidth: true,
-    name,
-    label: (
-      <span>
-        {fieldSchema.title || name}
-        {isRequired && <span style={{ color: 'red' }}> *</span>}
-        {fieldSchema.description && (
-          <Tooltip title={fieldSchema.description} arrow>
-            <InfoIcon
-              fontSize="small"
-              sx={{ ml: 1, verticalAlign: 'middle' }}
-            />
-          </Tooltip>
-        )}
-      </span>
-    ),
-    value: value !== undefined ? value : '',
-    onChange: (e) => onChange(name, e.target.value),
-    onBlur: () => onBlur(name),
-    error: touched && !!error,
-    helperText: touched && error,
-    required: isRequired,
-  };
+  const plugin = pluginRegistry.getPlugin(schema);
 
-  if (customComponents[name]) {
-    const CustomComponent = customComponents[name];
+  if (plugin) {
+    const PluginComponent = plugin.component;
     return (
-      <CustomComponent
-        {...commonProps}
-        schema={fieldSchema}
-        onChange={(value) => onChange(name, value)}
+      <PluginComponent
+        name={name}
+        schema={schema}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        error={error}
       />
     );
   }
 
-  if (fieldSchema.enum) {
-    const options = fieldSchema.enum.map((option, index) => ({
-      value: option,
-      label: fieldSchema.enumNames?.[index] || option,
-    }));
+  const commonProps = {
+    name,
+    schema,
+    value,
+    onChange,
+    onBlur,
+    error,
+  };
 
-    return (
-      <FormControl {...commonProps}>
-        <InputLabel error={touched && !!error}>{commonProps.label}</InputLabel>
-        <Select {...commonProps} label={commonProps.label}>
-          {options.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  }
-
-  switch (fieldSchema.type) {
+  switch (schema.type) {
     case 'string':
-      return (
-        <StringField
-          name={name}
-          schema={fieldSchema}
-          value={value}
-          onChange={onChange}
-          onBlur={onBlur}
-          error={error}
-          touched={touched}
-        />
-      );
+      return <StringField {...commonProps} />;
     case 'number':
     case 'integer':
-      return <TextField {...commonProps} type="number" />;
+      return <NumberField {...commonProps} />;
     case 'boolean':
-      return (
-        <FormControlLabel
-          control={
-            <Switch
-              checked={!!value}
-              onChange={(e) => onChange(name, e.target.checked)}
-            />
-          }
-          label={commonProps.label}
-        />
-      );
+      return <BooleanField {...commonProps} />;
     case 'array':
-      return (
-        <ArrayField
-          fieldSchema={fieldSchema}
-          value={value}
-          onChange={(newValue) => onChange(name, newValue)}
-          error={error}
-        />
-      );
+      return <ArrayField {...commonProps} />;
+    case 'object':
+      return <ObjectField {...commonProps} />;
     default:
-      return (
-        <Typography color="error">
-          Unsupported field type: {fieldSchema.type}
-        </Typography>
-      );
+      return <div>Unsupported field type: {schema.type}</div>;
   }
 };
 
-export default FieldRenderer;
+export default React.memo(FieldRenderer);

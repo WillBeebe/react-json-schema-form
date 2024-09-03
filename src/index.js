@@ -1,5 +1,5 @@
 import JsonSchemaForm from './components/JsonSchemaForm';
-import GCPRegionsComponent from './customComponents/GCPRegions';
+import GCPRegionsComponent from './plugins/customComponents/GCPRegions';
 
 export default JsonSchemaForm;
 export { GCPRegionsComponent };
