@@ -1,52 +1,12 @@
 const path = require('path');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  entry: './src/index.js',
-  devtool: 'source-map',
+  mode: 'development',
+  entry: './src/dev/index.js',
   output: {
-    filename: 'index.js',
+    filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
-    library: {
-      name: 'ReactJsonSchemaForm',
-      type: 'umd',
-    },
-    globalObject: 'this',
-  },
-  externals: {
-    react: {
-      commonjs: 'react',
-      commonjs2: 'react',
-      amd: 'react',
-      root: 'React',
-    },
-    'react-dom': {
-      commonjs: 'react-dom',
-      commonjs2: 'react-dom',
-      amd: 'react-dom',
-      root: 'ReactDOM',
-    },
-    recoil: {
-      commonjs: 'recoil',
-      commonjs2: 'recoil',
-      amd: 'recoil',
-      root: 'Recoil',
-    },
-    '@mui/material': '@mui/material',
-    '@mui/icons-material': '@mui/icons-material',
-    'react-beautiful-dnd': 'react-beautiful-dnd',
-    '@emotion/react': {
-      commonjs: '@emotion/react',
-      commonjs2: '@emotion/react',
-      amd: '@emotion/react',
-      root: ['emotionReact'],
-    },
-    '@emotion/styled': {
-      commonjs: '@emotion/styled',
-      commonjs2: '@emotion/styled',
-      amd: '@emotion/styled',
-      root: ['emotionStyled'],
-    },
   },
   module: {
     rules: [
@@ -62,9 +22,20 @@ module.exports = {
       },
     ],
   },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './src/dev/index.html',
+    }),
+  ],
+  devServer: {
+    static: {
+      directory: path.join(__dirname, 'dist'),
+    },
+    compress: true,
+    port: 9000,
+    open: true,
+  },
   resolve: {
     extensions: ['.js', '.jsx'],
   },
-  plugins: [new CleanWebpackPlugin()],
-  mode: 'development',
 };

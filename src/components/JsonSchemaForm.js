@@ -1,10 +1,4 @@
-import {
-  Alert,
-  Button,
-  CircularProgress,
-  Snackbar,
-  Stack,
-} from '@mui/material';
+import { Button, CircularProgress, Snackbar, Stack } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, {
   forwardRef,
@@ -12,23 +6,16 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
-  useState,
 } from 'react';
 import { useFormState } from '../hooks/useFormState';
+import { useFormSubmission } from '../hooks/useFormSubmission';
 import { useFormValidation } from '../hooks/useFormValidation';
-import { pluginRegistry } from '../plugins/PluginRegistry';
 import ErrorBoundary from './ErrorBoundary';
-import FieldRenderer from './FieldRenderer';
+import FormField from './FormField';
 
 const StyledForm = styled('form')(({ theme }) => ({
   '& .MuiFormControl-root': {
     marginBottom: theme.spacing(2),
-  },
-  '& .MuiInputLabel-root': {
-    transition: 'all 0.2s',
-    '&.MuiInputLabel-shrink': {
-      transform: 'translate(14px, -6px) scale(0.75)',
-    },
   },
 }));
 
@@ -39,10 +26,8 @@ const JsonSchemaForm = forwardRef(
       initialData = {},
       onSubmit,
       onChange,
-      onClose,
       customComponents = {},
       isLoading = false,
-      plugins = [],
     },
     ref
   ) => {
@@ -61,89 +46,13 @@ const JsonSchemaForm = forwardRef(
     const { errors, isValid, validateAllFields, validateSingleField } =
       useFormValidation(memoizedSchema, formData, touched);
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [snackbar, setSnackbar] = useState({
-      open: false,
-      message: '',
-      severity: 'success',
-    });
-    const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
-
-    // Register plugins
-    useEffect(() => {
-      plugins.forEach((plugin) => pluginRegistry.register(plugin));
-      return () => {
-        plugins.forEach((plugin) => pluginRegistry.unregister(plugin.name));
-      };
-    }, [plugins]);
-
-    const defaultValues = useMemo(() => {
-      const newFormData = { ...memoizedInitialData };
-      if (memoizedSchema) {
-        Object.entries(memoizedSchema.properties).forEach(
-          ([key, fieldSchema]) => {
-            if (
-              fieldSchema.default !== undefined &&
-              memoizedInitialData[key] === undefined
-            ) {
-              newFormData[key] = fieldSchema.default;
-            }
-            if (fieldSchema.type === 'array' && !newFormData[key]) {
-              newFormData[key] = [];
-            }
-          }
-        );
-      }
-      return newFormData;
-    }, [memoizedSchema, memoizedInitialData]);
+    const { isSubmitting, snackbar, handleSubmit, closeSnackbar } =
+      useFormSubmission(onSubmit, validateAllFields);
 
     useEffect(() => {
-      setFormData(defaultValues);
+      setFormData(memoizedInitialData);
       resetForm();
-      setHasAttemptedSubmit(false);
-    }, [defaultValues, setFormData, resetForm]);
-
-    const handleSubmit = useCallback(
-      async (e) => {
-        if (e && e.preventDefault) {
-          e.preventDefault();
-        }
-        setHasAttemptedSubmit(true);
-        const validationResult = validateAllFields();
-        if (validationResult.isValid) {
-          setIsSubmitting(true);
-          try {
-            await onSubmit(formData);
-            setSnackbar({
-              open: true,
-              message: 'Form submitted successfully!',
-              severity: 'success',
-            });
-          } catch (error) {
-            setSnackbar({
-              open: true,
-              message: 'Error submitting form. Please try again.',
-              severity: 'error',
-            });
-          } finally {
-            setIsSubmitting(false);
-          }
-        } else {
-          setSnackbar({
-            open: true,
-            message: 'Please correct the errors in the form.',
-            severity: 'error',
-          });
-        }
-      },
-      [formData, validateAllFields, onSubmit]
-    );
-
-    useImperativeHandle(ref, () => ({
-      submit: handleSubmit,
-      validate: validateAllFields,
-      getData: () => formData,
-    }));
+    }, [memoizedInitialData, setFormData, resetForm]);
 
     const memoizedHandleChange = useCallback(
       (name, value) => {
@@ -151,18 +60,16 @@ const JsonSchemaForm = forwardRef(
         if (onChange) {
           onChange({ ...formData, [name]: value });
         }
-        if (hasAttemptedSubmit) {
-          validateSingleField(name, value);
-        }
+        validateSingleField(name, value);
       },
-      [
-        handleChange,
-        onChange,
-        formData,
-        hasAttemptedSubmit,
-        validateSingleField,
-      ]
+      [handleChange, onChange, formData, validateSingleField]
     );
+
+    useImperativeHandle(ref, () => ({
+      submit: () => handleSubmit(formData),
+      validate: validateAllFields,
+      getData: () => formData,
+    }));
 
     return (
       <ErrorBoundary>
@@ -171,16 +78,15 @@ const JsonSchemaForm = forwardRef(
             {memoizedSchema &&
               Object.entries(memoizedSchema.properties).map(
                 ([key, fieldSchema]) => (
-                  <FieldRenderer
+                  <FormField
                     key={key}
                     name={key}
-                    schema={memoizedSchema}
-                    fieldSchema={fieldSchema}
+                    schema={fieldSchema}
                     value={formData[key]}
-                    error={hasAttemptedSubmit ? errors[key] : undefined}
-                    touched={touched[key]}
                     onChange={memoizedHandleChange}
                     onBlur={handleBlur}
+                    error={errors[key]}
+                    touched={touched[key]}
                     customComponents={customComponents}
                   />
                 )
@@ -191,8 +97,8 @@ const JsonSchemaForm = forwardRef(
               type="submit"
               variant="contained"
               color="primary"
-              onClick={handleSubmit}
-              disabled={isSubmitting || isLoading}
+              onClick={() => handleSubmit(formData)}
+              disabled={isSubmitting || isLoading || !isValid}
               startIcon={
                 isSubmitting || isLoading ? (
                   <CircularProgress size={20} />
@@ -205,16 +111,10 @@ const JsonSchemaForm = forwardRef(
           <Snackbar
             open={snackbar.open}
             autoHideDuration={6000}
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-          >
-            <Alert
-              onClose={() => setSnackbar({ ...snackbar, open: false })}
-              severity={snackbar.severity}
-              sx={{ width: '100%' }}
-            >
-              {snackbar.message}
-            </Alert>
-          </Snackbar>
+            onClose={closeSnackbar}
+            message={snackbar.message}
+            severity={snackbar.severity}
+          />
         </StyledForm>
       </ErrorBoundary>
     );
