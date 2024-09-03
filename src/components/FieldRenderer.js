@@ -1,5 +1,5 @@
 import React from 'react';
-import { useErrors } from '../context/ErrorContext';
+// import { useErrors } from '../context/ErrorContext';
 import { pluginRegistry } from '../plugins/PluginRegistry';
 import ArrayField from './fields/ArrayField';
 import BooleanField from './fields/BooleanField';
@@ -8,8 +8,8 @@ import ObjectField from './fields/ObjectField';
 import StringField from './fields/StringField';
 
 const FieldRenderer = ({ name, schema, value, onChange, onBlur }) => {
-  const { errors } = useErrors();
-  const error = errors[name];
+  // const { errors } = useErrors();
+  // const error = errors[name];
 
   const plugin = pluginRegistry.getPlugin(schema);
 
@@ -22,7 +22,7 @@ const FieldRenderer = ({ name, schema, value, onChange, onBlur }) => {
         value={value}
         onChange={onChange}
         onBlur={onBlur}
-        error={error}
+        // error={error}
       />
     );
   }
@@ -33,7 +33,7 @@ const FieldRenderer = ({ name, schema, value, onChange, onBlur }) => {
     value,
     onChange,
     onBlur,
-    error,
+    // error,
   };
 
   switch (schema.type) {

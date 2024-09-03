@@ -3,44 +3,49 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
   entry: './src/index.js',
+  devtool: 'source-map',
   output: {
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist'),
-    library: 'JsonSchemaForm',
-    libraryTarget: 'umd',
+    library: {
+      name: 'ReactJsonSchemaForm',
+      type: 'umd',
+    },
     globalObject: 'this',
-    umdNamedDefine: true,
   },
   externals: {
     react: {
       commonjs: 'react',
       commonjs2: 'react',
-      amd: 'React',
+      amd: 'react',
       root: 'React',
     },
     'react-dom': {
       commonjs: 'react-dom',
       commonjs2: 'react-dom',
-      amd: 'ReactDOM',
+      amd: 'react-dom',
       root: 'ReactDOM',
     },
-    '@mui/material': {
-      commonjs: '@mui/material',
-      commonjs2: '@mui/material',
-      amd: '@mui/material',
-      root: 'MuiMaterial',
+    recoil: {
+      commonjs: 'recoil',
+      commonjs2: 'recoil',
+      amd: 'recoil',
+      root: 'Recoil',
     },
-    '@mui/icons-material': {
-      commonjs: '@mui/icons-material',
-      commonjs2: '@mui/icons-material',
-      amd: '@mui/icons-material',
-      root: 'MuiIcons',
+    '@mui/material': '@mui/material',
+    '@mui/icons-material': '@mui/icons-material',
+    'react-beautiful-dnd': 'react-beautiful-dnd',
+    '@emotion/react': {
+      commonjs: '@emotion/react',
+      commonjs2: '@emotion/react',
+      amd: '@emotion/react',
+      root: ['emotionReact'],
     },
-    'react-beautiful-dnd': {
-      commonjs: 'react-beautiful-dnd',
-      commonjs2: 'react-beautiful-dnd',
-      amd: 'ReactBeautifulDnd',
-      root: 'ReactBeautifulDnd',
+    '@emotion/styled': {
+      commonjs: '@emotion/styled',
+      commonjs2: '@emotion/styled',
+      amd: '@emotion/styled',
+      root: ['emotionStyled'],
     },
   },
   module: {
@@ -61,5 +66,5 @@ module.exports = {
     extensions: ['.js', '.jsx'],
   },
   plugins: [new CleanWebpackPlugin()],
-  mode: 'production',
+  mode: 'production', // Change to 'production' for production builds
 };
