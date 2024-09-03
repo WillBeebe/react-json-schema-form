@@ -6,7 +6,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import React from 'react';
+import PropTypes from 'prop-types';
+import React, { useCallback } from 'react';
 
 const BooleanField = ({
   name,
@@ -22,13 +23,16 @@ const BooleanField = ({
   const fieldId = `field-${name}`;
   const errorId = `${fieldId}-error`;
 
-  const handleChange = (event) => {
-    onChange(name, event.target.checked);
-  };
+  const handleChange = useCallback(
+    (event) => {
+      onChange(name, event.target.checked);
+    },
+    [name, onChange]
+  );
 
-  const handleBlur = () => {
+  const handleBlur = useCallback(() => {
     onBlur(name);
-  };
+  }, [name, onBlur]);
 
   return (
     <FormControl fullWidth error={touched && !!error} required={isRequired}>
@@ -67,6 +71,20 @@ const BooleanField = ({
       )}
     </FormControl>
   );
+};
+
+BooleanField.propTypes = {
+  name: PropTypes.string.isRequired,
+  schema: PropTypes.shape({
+    title: PropTypes.string,
+    description: PropTypes.string,
+    required: PropTypes.arrayOf(PropTypes.string),
+  }).isRequired,
+  value: PropTypes.bool,
+  onChange: PropTypes.func.isRequired,
+  onBlur: PropTypes.func.isRequired,
+  error: PropTypes.string,
+  touched: PropTypes.bool,
 };
 
 export default React.memo(BooleanField);

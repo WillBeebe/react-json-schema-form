@@ -1,6 +1,6 @@
 import { Container, Grid, Paper, Typography } from '@mui/material';
-import React from 'react';
-import JsonSchemaForm from './JsonSchemaForm';
+import React, { useCallback, useState } from 'react';
+import JsonSchemaForm from './../index';
 
 const presets = [
   {
@@ -101,6 +101,21 @@ const presets = [
 ];
 
 const FormVisualizer = () => {
+  const [formData, setFormData] = useState(
+    presets.reduce((acc, preset) => ({ ...acc, [preset.name]: {} }), {})
+  );
+
+  const handleChange = useCallback((formName, newData) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      [formName]: newData,
+    }));
+  }, []);
+
+  const handleSubmit = useCallback((formName, data) => {
+    console.log(formName, 'submitted:', data);
+  }, []);
+
   return (
     <Container maxWidth="lg" sx={{ my: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
@@ -115,9 +130,9 @@ const FormVisualizer = () => {
               </Typography>
               <JsonSchemaForm
                 schema={preset.schema}
-                onSubmit={(data) =>
-                  console.log(preset.name, 'submitted:', data)
-                }
+                initialData={formData[preset.name]}
+                onChange={(newData) => handleChange(preset.name, newData)}
+                onSubmit={(data) => handleSubmit(preset.name, data)}
               />
             </Paper>
           </Grid>

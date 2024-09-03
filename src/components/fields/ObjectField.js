@@ -1,15 +1,14 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import InfoIcon from '@mui/icons-material/Info';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Box,
-  Tooltip,
   Typography,
 } from '@mui/material';
-import React from 'react';
-import FieldRenderer from '../FieldRenderer';
+import PropTypes from 'prop-types';
+import React, { useCallback } from 'react';
+import FormField from '../FormField';
 
 const ObjectField = ({
   name,
@@ -21,49 +20,39 @@ const ObjectField = ({
   touched,
   customComponents,
 }) => {
-  const { title, description, properties } = schema;
-  const isRequired = schema.required && schema.required.includes(name);
-  const fieldId = `field-${name}`;
-  const errorId = `${fieldId}-error`;
+  const handleFieldChange = useCallback(
+    (fieldName, fieldValue) => {
+      onChange(name, { ...value, [fieldName]: fieldValue });
+    },
+    [name, value, onChange]
+  );
 
-  const handleChange = (fieldName, fieldValue) => {
-    onChange(name, { ...value, [fieldName]: fieldValue });
-  };
-
-  const handleBlur = (fieldName) => {
-    onBlur(`${name}.${fieldName}`);
-  };
+  const handleFieldBlur = useCallback(
+    (fieldName) => {
+      onBlur(`${name}.${fieldName}`);
+    },
+    [name, onBlur]
+  );
 
   return (
-    <Accordion defaultExpanded id={fieldId}>
+    <Accordion defaultExpanded>
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
-        aria-controls={`${fieldId}-content`}
-        id={`${fieldId}-header`}
+        aria-controls={`${name}-content`}
+        id={`${name}-header`}
       >
-        <Typography>
-          {title || name}
-          {isRequired && <span style={{ color: 'red' }}> *</span>}
-          {description && (
-            <Tooltip title={description} arrow>
-              <InfoIcon
-                fontSize="small"
-                sx={{ ml: 1, verticalAlign: 'middle' }}
-              />
-            </Tooltip>
-          )}
-        </Typography>
+        <Typography variant="subtitle1">{schema.title || name}</Typography>
       </AccordionSummary>
-      <AccordionDetails id={`${fieldId}-content`}>
+      <AccordionDetails>
         <Box sx={{ pl: 2 }}>
-          {Object.entries(properties).map(([fieldName, fieldSchema]) => (
-            <FieldRenderer
+          {Object.entries(schema.properties).map(([fieldName, fieldSchema]) => (
+            <FormField
               key={fieldName}
               name={fieldName}
               schema={fieldSchema}
               value={(value || {})[fieldName]}
-              onChange={handleChange}
-              onBlur={handleBlur}
+              onChange={handleFieldChange}
+              onBlur={handleFieldBlur}
               error={error && error[fieldName]}
               touched={touched && touched[fieldName]}
               customComponents={customComponents}
@@ -73,6 +62,17 @@ const ObjectField = ({
       </AccordionDetails>
     </Accordion>
   );
+};
+
+ObjectField.propTypes = {
+  name: PropTypes.string.isRequired,
+  schema: PropTypes.object.isRequired,
+  value: PropTypes.object,
+  onChange: PropTypes.func.isRequired,
+  onBlur: PropTypes.func.isRequired,
+  error: PropTypes.object,
+  touched: PropTypes.object,
+  customComponents: PropTypes.object,
 };
 
 export default React.memo(ObjectField);

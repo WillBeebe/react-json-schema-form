@@ -1,6 +1,7 @@
 import InfoIcon from '@mui/icons-material/Info';
 import { TextField, Tooltip } from '@mui/material';
-import React from 'react';
+import PropTypes from 'prop-types';
+import React, { useCallback } from 'react';
 
 const NumberField = ({
   name,
@@ -16,15 +17,18 @@ const NumberField = ({
   const fieldId = `field-${name}`;
   const errorId = `${fieldId}-error`;
 
-  const handleChange = (event) => {
-    const newValue =
-      event.target.value === '' ? '' : Number(event.target.value);
-    onChange(name, newValue);
-  };
+  const handleChange = useCallback(
+    (event) => {
+      const newValue =
+        event.target.value === '' ? '' : Number(event.target.value);
+      onChange(name, newValue);
+    },
+    [name, onChange]
+  );
 
-  const handleBlur = (event) => {
+  const handleBlur = useCallback(() => {
     onBlur(name);
-  };
+  }, [name, onBlur]);
 
   return (
     <TextField
@@ -63,6 +67,23 @@ const NumberField = ({
       aria-describedby={error ? errorId : undefined}
     />
   );
+};
+
+NumberField.propTypes = {
+  name: PropTypes.string.isRequired,
+  schema: PropTypes.shape({
+    title: PropTypes.string,
+    description: PropTypes.string,
+    required: PropTypes.arrayOf(PropTypes.string),
+    minimum: PropTypes.number,
+    maximum: PropTypes.number,
+    multipleOf: PropTypes.number,
+  }).isRequired,
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onChange: PropTypes.func.isRequired,
+  onBlur: PropTypes.func.isRequired,
+  error: PropTypes.string,
+  touched: PropTypes.bool,
 };
 
 export default React.memo(NumberField);
