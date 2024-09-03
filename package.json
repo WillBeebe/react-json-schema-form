@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest",
     "build": "webpack --config webpack.config.js",
-    "dev": "webpack --config webpack.config.js --watch"
+    "dev": "webpack --config webpack.config.dev.js --watch"
   },
   "repository": {
     "type": "git",

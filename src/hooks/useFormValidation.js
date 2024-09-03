@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { validateField, validateForm } from '../utils/validationUtils';
 
 export const useFormValidation = (schema, formData, touched) => {
@@ -24,7 +24,6 @@ export const useFormValidation = (schema, formData, touched) => {
   );
 
   useEffect(() => {
-    // Validate touched fields
     Object.keys(touched).forEach((fieldName) => {
       if (touched[fieldName]) {
         validateSingleField(fieldName, formData[fieldName]);
@@ -32,9 +31,12 @@ export const useFormValidation = (schema, formData, touched) => {
     });
   }, [formData, touched, validateSingleField]);
 
+  const memoizedErrors = useMemo(() => errors, [errors]);
+  const memoizedIsValid = useMemo(() => isValid, [isValid]);
+
   return {
-    errors,
-    isValid,
+    errors: memoizedErrors,
+    isValid: memoizedIsValid,
     validateAllFields,
     validateSingleField,
   };

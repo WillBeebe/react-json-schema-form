@@ -13,6 +13,8 @@ const NumberField = ({
 }) => {
   const { title, description, minimum, maximum, multipleOf } = schema;
   const isRequired = schema.required && schema.required.includes(name);
+  const fieldId = `field-${name}`;
+  const errorId = `${fieldId}-error`;
 
   const handleChange = (event) => {
     const newValue =
@@ -27,6 +29,7 @@ const NumberField = ({
   return (
     <TextField
       fullWidth
+      id={fieldId}
       label={
         <span>
           {title || name}
@@ -56,6 +59,8 @@ const NumberField = ({
           step: multipleOf,
         },
       }}
+      aria-invalid={touched && !!error}
+      aria-describedby={error ? errorId : undefined}
     />
   );
 };

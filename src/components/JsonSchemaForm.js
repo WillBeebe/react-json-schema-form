@@ -17,6 +17,7 @@ import React, {
 import { useFormState } from '../hooks/useFormState';
 import { useFormValidation } from '../hooks/useFormValidation';
 import { pluginRegistry } from '../plugins/PluginRegistry';
+import ErrorBoundary from './ErrorBoundary';
 import FieldRenderer from './FieldRenderer';
 
 const StyledForm = styled('form')(({ theme }) => ({
@@ -164,54 +165,58 @@ const JsonSchemaForm = forwardRef(
     );
 
     return (
-      <StyledForm onSubmit={(e) => e.preventDefault()}>
-        <Stack spacing={2}>
-          {memoizedSchema &&
-            Object.entries(memoizedSchema.properties).map(
-              ([key, fieldSchema]) => (
-                <FieldRenderer
-                  key={key}
-                  name={key}
-                  schema={memoizedSchema}
-                  fieldSchema={fieldSchema}
-                  value={formData[key]}
-                  error={hasAttemptedSubmit ? errors[key] : undefined}
-                  touched={touched[key]}
-                  onChange={memoizedHandleChange}
-                  onBlur={handleBlur}
-                  customComponents={customComponents}
-                />
-              )
-            )}
-        </Stack>
-        {!ref && (
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit}
-            disabled={isSubmitting || isLoading}
-            startIcon={
-              isSubmitting || isLoading ? <CircularProgress size={20} /> : null
-            }
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit'}
-          </Button>
-        )}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-        >
-          <Alert
+      <ErrorBoundary>
+        <StyledForm onSubmit={(e) => e.preventDefault()}>
+          <Stack spacing={2}>
+            {memoizedSchema &&
+              Object.entries(memoizedSchema.properties).map(
+                ([key, fieldSchema]) => (
+                  <FieldRenderer
+                    key={key}
+                    name={key}
+                    schema={memoizedSchema}
+                    fieldSchema={fieldSchema}
+                    value={formData[key]}
+                    error={hasAttemptedSubmit ? errors[key] : undefined}
+                    touched={touched[key]}
+                    onChange={memoizedHandleChange}
+                    onBlur={handleBlur}
+                    customComponents={customComponents}
+                  />
+                )
+              )}
+          </Stack>
+          {!ref && (
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              onClick={handleSubmit}
+              disabled={isSubmitting || isLoading}
+              startIcon={
+                isSubmitting || isLoading ? (
+                  <CircularProgress size={20} />
+                ) : null
+              }
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit'}
+            </Button>
+          )}
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={6000}
             onClose={() => setSnackbar({ ...snackbar, open: false })}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
           >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </StyledForm>
+            <Alert
+              onClose={() => setSnackbar({ ...snackbar, open: false })}
+              severity={snackbar.severity}
+              sx={{ width: '100%' }}
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+        </StyledForm>
+      </ErrorBoundary>
     );
   }
 );

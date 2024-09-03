@@ -19,6 +19,8 @@ const BooleanField = ({
 }) => {
   const { title, description } = schema;
   const isRequired = schema.required && schema.required.includes(name);
+  const fieldId = `field-${name}`;
+  const errorId = `${fieldId}-error`;
 
   const handleChange = (event) => {
     onChange(name, event.target.checked);
@@ -37,6 +39,10 @@ const BooleanField = ({
             onChange={handleChange}
             onBlur={handleBlur}
             name={name}
+            id={fieldId}
+            inputProps={{
+              'aria-describedby': error ? errorId : undefined,
+            }}
           />
         }
         label={
@@ -55,7 +61,7 @@ const BooleanField = ({
         }
       />
       {touched && error && (
-        <Typography color="error" variant="caption">
+        <Typography color="error" variant="caption" id={errorId}>
           {error}
         </Typography>
       )}

@@ -11,25 +11,35 @@ export const createGetItemSchema = (fieldSchema) => {
 export const createDefaultValue = (schema) => {
   if (!schema) return null;
 
+  if (schema.default !== undefined) {
+    return schema.default;
+  }
+
   switch (schema.type) {
     case 'string':
-      return schema.default || '';
+      return '';
     case 'number':
     case 'integer':
-      return schema.default || 0;
+      return 0;
     case 'boolean':
-      return schema.default || false;
+      return false;
     case 'array':
-      return schema.default || [];
+      if (schema.minItems && schema.items) {
+        return Array(schema.minItems).fill(createDefaultValue(schema.items));
+      }
+      return [];
     case 'object':
       if (schema.properties) {
-        return Object.keys(schema.properties).reduce((acc, key) => {
-          acc[key] = createDefaultValue(schema.properties[key]);
-          return acc;
-        }, {});
+        const obj = {};
+        for (const [key, propSchema] of Object.entries(schema.properties)) {
+          if (schema.required && schema.required.includes(key)) {
+            obj[key] = createDefaultValue(propSchema);
+          }
+        }
+        return obj;
       }
-      return schema.default || {};
+      return {};
     default:
-      return schema.default || null;
+      return null;
   }
 };

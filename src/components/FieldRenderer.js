@@ -1,5 +1,5 @@
 import React from 'react';
-// import { useErrors } from '../context/ErrorContext';
+import { useErrors } from '../context/ErrorContext';
 import { pluginRegistry } from '../plugins/PluginRegistry';
 import ArrayField from './fields/ArrayField';
 import BooleanField from './fields/BooleanField';
@@ -8,8 +8,13 @@ import ObjectField from './fields/ObjectField';
 import StringField from './fields/StringField';
 
 const FieldRenderer = ({ name, schema, value, onChange, onBlur }) => {
-  // const { errors } = useErrors();
-  // const error = errors[name];
+  // TODO: Implement conditional rendering based on other field values
+  // This can be done by adding a `conditions` property to the schema
+  // and evaluating it here before rendering the field.
+
+  // TODO:
+  const { errors } = useErrors();
+  const error = errors[name];
 
   const plugin = pluginRegistry.getPlugin(schema);
 

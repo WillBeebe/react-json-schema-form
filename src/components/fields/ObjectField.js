@@ -23,6 +23,8 @@ const ObjectField = ({
 }) => {
   const { title, description, properties } = schema;
   const isRequired = schema.required && schema.required.includes(name);
+  const fieldId = `field-${name}`;
+  const errorId = `${fieldId}-error`;
 
   const handleChange = (fieldName, fieldValue) => {
     onChange(name, { ...value, [fieldName]: fieldValue });
@@ -33,8 +35,12 @@ const ObjectField = ({
   };
 
   return (
-    <Accordion defaultExpanded>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+    <Accordion defaultExpanded id={fieldId}>
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        aria-controls={`${fieldId}-content`}
+        id={`${fieldId}-header`}
+      >
         <Typography>
           {title || name}
           {isRequired && <span style={{ color: 'red' }}> *</span>}
@@ -48,7 +54,7 @@ const ObjectField = ({
           )}
         </Typography>
       </AccordionSummary>
-      <AccordionDetails>
+      <AccordionDetails id={`${fieldId}-content`}>
         <Box sx={{ pl: 2 }}>
           {Object.entries(properties).map(([fieldName, fieldSchema]) => (
             <FieldRenderer
