@@ -1,0 +1,5 @@
+src/
+examples/
+tests/
+.gitignore
+webpack.config.js
