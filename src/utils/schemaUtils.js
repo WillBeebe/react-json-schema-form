@@ -1,15 +1,21 @@
 export const createGetItemSchema = (fieldSchema) => {
+  console.log('createGetItemSchema input:', fieldSchema);
+  if (!fieldSchema) return () => ({});
+
   if (Array.isArray(fieldSchema.items)) {
     // Handle tuple validation
     return (index) =>
-      fieldSchema.items[index] || fieldSchema.additionalItems || {};
+      (fieldSchema.items && fieldSchema.items[index]) ||
+      fieldSchema.additionalItems ||
+      {};
   }
   // Handle list validation
   return () => fieldSchema.items || {};
 };
 
 export const createDefaultValue = (schema) => {
-  if (!schema) return null;
+  console.log('createDefaultValue input:', schema);
+  if (!schema || typeof schema !== 'object') return null;
 
   if (schema.default !== undefined) {
     return schema.default;

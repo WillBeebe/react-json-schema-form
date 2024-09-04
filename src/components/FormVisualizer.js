@@ -1,4 +1,14 @@
-import { Container, Grid, Paper, Typography } from '@mui/material';
+import {
+  Button,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Paper,
+  Typography,
+} from '@mui/material';
 import React, { useCallback, useState } from 'react';
 import JsonSchemaForm from './../index';
 
@@ -8,11 +18,190 @@ const presets = [
     schema: {
       type: 'object',
       properties: {
-        name: { type: 'string', title: 'Name' },
+        name: { type: 'string', title: 'Name', default: 'John Doe' },
         age: { type: 'number', title: 'Age' },
         email: { type: 'string', title: 'Email', format: 'email' },
+        redis_version: {
+          type: 'string',
+          title: 'Redis Version',
+          enum: ['REDIS_3_2', 'REDIS_4_0'],
+          default: 'REDIS_3_2',
+        },
       },
       required: ['name', 'email'],
+    },
+  },
+
+  {
+    name: 'GCS Bucket',
+    schema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          title: 'Bucket Name',
+          description: 'The name of the storage bucket',
+          pattern: '^[a-z0-9][-_.a-z0-9]*[a-z0-9]$',
+          maxLength: 63,
+        },
+        location: {
+          type: 'string',
+          title: 'Location',
+          description: 'The location of the bucket (region or multi-region)',
+          enum: [
+            'US',
+            'EU',
+            'ASIA',
+            'us-central1',
+            'us-east1',
+            'us-west1',
+            'us-east4',
+            'europe-west1',
+            'europe-west2',
+            'asia-east1',
+            'asia-northeast1',
+          ],
+        },
+        storage_class: {
+          type: 'string',
+          title: 'Storage Class',
+          description: 'The storage class of the bucket',
+          enum: ['STANDARD', 'NEARLINE', 'COLDLINE', 'ARCHIVE'],
+          default: 'STANDARD',
+        },
+        versioning: {
+          type: 'boolean',
+          title: 'Enable Versioning',
+          description: 'Whether to enable versioning for the bucket',
+          default: false,
+        },
+        lifecycle_rules: {
+          type: 'array',
+          title: 'Lifecycle Rules',
+          description: 'List of lifecycle rules for the bucket',
+          items: {
+            type: 'object',
+            properties: {
+              action: {
+                type: 'string',
+                enum: ['Delete', 'SetStorageClass'],
+              },
+              age: {
+                type: 'integer',
+                minimum: 0,
+              },
+              storage_class: {
+                type: 'string',
+                enum: ['NEARLINE', 'COLDLINE', 'ARCHIVE'],
+              },
+            },
+          },
+        },
+        encryption: {
+          type: 'object',
+          title: 'Encryption',
+          description: 'Encryption settings for the bucket',
+          properties: {
+            default_kms_key_name: {
+              type: 'string',
+              description:
+                'The Cloud KMS key name to use for the default encryption',
+            },
+          },
+        },
+        uniform_bucket_level_access: {
+          type: 'boolean',
+          title: 'Uniform Bucket-Level Access',
+          description: 'Whether to enable uniform bucket-level access',
+          default: true,
+        },
+        public_access_prevention: {
+          type: 'string',
+          title: 'Public Access Prevention',
+          description: 'The public access prevention setting',
+          enum: ['inherited', 'enforced'],
+          default: 'inherited',
+        },
+      },
+      required: ['name', 'location'],
+    },
+  },
+
+  {
+    name: 'Cloud SQL Instance',
+    schema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          title: 'Instance Name',
+          description: 'The name of the Cloud SQL instance',
+          pattern: '^[a-z][a-z0-9-]+[a-z0-9]$',
+          maxLength: 63,
+        },
+        database_version: {
+          type: 'string',
+          title: 'MySQL Version',
+          description: 'The MySQL version to use',
+          enum: ['MYSQL_5_6', 'MYSQL_5_7', 'MYSQL_8_0'],
+          default: 'MYSQL_8_0',
+        },
+        region: {
+          type: 'string',
+          title: 'Region',
+          description: 'The GCP region where the instance will be created',
+          pattern: '^[a-z]+-[a-z]+[0-9]$',
+        },
+        tier: {
+          type: 'string',
+          title: 'Machine Type',
+          description:
+            'The machine type to use, in the form db-custom-CPUS-MEMORY',
+          pattern: '^db-custom-[1-9][0-9]?-[0-9]+$',
+          default: 'db-custom-1-3840',
+        },
+        storage_type: {
+          type: 'string',
+          title: 'Storage Type',
+          description: 'The storage type for the instance',
+          enum: ['PD_SSD', 'PD_HDD'],
+          default: 'PD_SSD',
+        },
+        storage_size_gb: {
+          type: 'integer',
+          title: 'Storage Size (GB)',
+          description: 'The size of the storage in GB',
+          minimum: 10,
+          maximum: 65536,
+        },
+        availability_type: {
+          type: 'string',
+          title: 'Availability Type',
+          description: 'The availability type of the instance',
+          enum: ['ZONAL', 'REGIONAL'],
+          default: 'ZONAL',
+        },
+        backup_enabled: {
+          type: 'boolean',
+          title: 'Enable Backups',
+          description: 'Whether to enable automated backups',
+          default: true,
+        },
+        backup_start_time: {
+          type: 'string',
+          title: 'Backup Start Time',
+          description: 'The start time of the backup window in UTC (HH:MM)',
+          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$',
+          default: '02:00',
+        },
+        enable_binary_log: {
+          type: 'boolean',
+          title: 'Enable Binary Logging',
+          description: 'Whether to enable binary logging for replication',
+          default: true,
+        },
+      },
+      required: ['name', 'region', 'tier', 'storage_size_gb'],
     },
   },
   {
@@ -112,8 +301,16 @@ const FormVisualizer = () => {
     }));
   }, []);
 
+  const [openDialog, setOpenDialog] = useState(false);
+  const [submittedData, setSubmittedData] = useState(null);
+
   const handleSubmit = useCallback((formName, data) => {
-    console.log(formName, 'submitted:', data);
+    setSubmittedData({ formName, data });
+    setOpenDialog(true);
+  }, []);
+
+  const handleCloseDialog = useCallback(() => {
+    setOpenDialog(false);
   }, []);
 
   return (
@@ -138,6 +335,21 @@ const FormVisualizer = () => {
           </Grid>
         ))}
       </Grid>
+
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Submitted Form Data</DialogTitle>
+        <DialogContent>
+          {submittedData && (
+            <>
+              <Typography variant="h6">{submittedData.formName}</Typography>
+              <pre>{JSON.stringify(submittedData.data, null, 2)}</pre>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

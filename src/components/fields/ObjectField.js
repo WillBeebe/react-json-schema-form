@@ -48,7 +48,7 @@ const ObjectField = ({
           {Object.entries(schema.properties).map(([fieldName, fieldSchema]) => (
             <FormField
               key={fieldName}
-              name={fieldName}
+              name={`${name}.${fieldName}`}
               schema={fieldSchema}
               value={(value || {})[fieldName]}
               onChange={handleFieldChange}

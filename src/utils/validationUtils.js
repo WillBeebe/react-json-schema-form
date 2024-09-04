@@ -47,7 +47,13 @@ export const validateField = (schema, name, value) => {
   const isValid = validate({ [name]: value });
 
   if (!isValid) {
-    return validate.errors[0].message;
+    const error = validate.errors[0];
+    if (error.keyword === 'pattern') {
+      return `Invalid format: ${
+        schema.properties[name].description || 'Must match the required pattern'
+      }`;
+    }
+    return error.message;
   }
 
   return null;

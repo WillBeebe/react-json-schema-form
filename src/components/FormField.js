@@ -2,6 +2,7 @@ import React from 'react';
 import FieldError from './FieldError';
 import ArrayField from './fields/ArrayField';
 import BooleanField from './fields/BooleanField';
+import EnumField from './fields/EnumField';
 import NumberField from './fields/NumberField';
 import ObjectField from './fields/ObjectField';
 import StringField from './fields/StringField';
@@ -24,12 +25,13 @@ const FormField = ({
     onBlur,
     error,
     touched,
+    customComponents,
   };
 
   let FieldComponent;
   switch (schema.type) {
     case 'string':
-      FieldComponent = StringField;
+      FieldComponent = schema.enum ? EnumField : StringField;
       break;
     case 'number':
     case 'integer':
