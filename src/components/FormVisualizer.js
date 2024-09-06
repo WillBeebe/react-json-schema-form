@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useCallback, useState } from 'react';
+import GCPRegionsComponent from '../plugins/customComponents/GCPRegions';
 import JsonSchemaForm from './../index';
 
 const presets = [
@@ -31,7 +32,31 @@ const presets = [
       required: ['name', 'email'],
     },
   },
-
+  {
+    name: 'GCP Region Selector',
+    schema: {
+      type: 'object',
+      properties: {
+        projectName: {
+          type: 'string',
+          title: 'Project Name',
+          description: 'Enter the name of your GCP project',
+        },
+        region: {
+          type: 'string',
+          title: 'GCP Region',
+          description: 'Select a GCP region for your resources',
+          'x-component': 'GCPRegions',
+        },
+        description: {
+          type: 'string',
+          title: 'Description',
+          description: 'Provide a brief description of your project',
+        },
+      },
+      required: ['projectName', 'region'],
+    },
+  },
   {
     name: 'GCS Bucket',
     schema: {
@@ -313,6 +338,10 @@ const FormVisualizer = () => {
     setOpenDialog(false);
   }, []);
 
+  const customComponents = {
+    GCPRegions: GCPRegionsComponent,
+  };
+
   return (
     <Container maxWidth="lg" sx={{ my: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
@@ -330,6 +359,7 @@ const FormVisualizer = () => {
                 initialData={formData[preset.name]}
                 onChange={(newData) => handleChange(preset.name, newData)}
                 onSubmit={(data) => handleSubmit(preset.name, data)}
+                customComponents={customComponents}
               />
             </Paper>
           </Grid>

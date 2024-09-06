@@ -50,7 +50,7 @@ const FormField = ({
       return <div>Unsupported field type: {schema.type}</div>;
   }
 
-  const CustomComponent = customComponents[name];
+  const CustomComponent = customComponents && customComponents[name];
   const ComponentToRender = CustomComponent || FieldComponent;
 
   return (
