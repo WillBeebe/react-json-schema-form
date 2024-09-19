@@ -1,6 +1,49 @@
 # react-jsonschema-form
 
-This thing was a beast to wrangle and only gets better the more time that's spent on it. In my mind, that's exactly when you break it out into it's own component.
+A complicated but powerful React component. 
 
-`npm link`
-`npm link json-schema-form`
+Fields and validation are purely driven via JSONSchema. 
+
+Support for Custom UI components, on top of Schema.
+
+
+```jsx
+import React, { useCallback } from 'react';
+import JsonSchemaForm from 'react-json-schema-form';
+
+const CreateProjectModal = ({ onSubmit }) => {
+	const schema = {
+		type: 'object',
+		properties: {
+			name: {
+				type: 'string',
+				title: 'Name',
+				minLength: 1,
+			},
+		},
+		required: ['name'],
+	};
+	
+	const uiSchema = {
+		name: {
+			'ui:autofocus': true,
+			'ui:placeholder': 'Project Name',
+		},
+	};
+	
+	const handleSubmit = useCallback(
+		async (formData) => {
+			await onSubmit(formData);
+			onClose();
+		}, [onSubmit, onClose]
+	);
+
+	return (
+		<JsonSchemaForm
+			schema={schema}
+			uiSchema={uiSchema}
+			onSubmit={handleSubmit}
+			hideSubmitButton={true}
+		/>);
+};
+```
