@@ -42,6 +42,7 @@ const ArrayField = ({ name, schema, value, onChange, error }) => {
 
   const handleItemChange = useCallback(
     (index, newValue) => {
+      console.log('handleItemChange called with:', index, newValue);
       const newArrayValue = [...arrayValue];
       newArrayValue[index] = newValue;
       onChange(name, newArrayValue);
@@ -50,6 +51,7 @@ const ArrayField = ({ name, schema, value, onChange, error }) => {
   );
 
   const handleAdd = useCallback(() => {
+    console.log('handleAdd called');
     const newItemSchema = getItemSchema(arrayValue.length);
     const newItem = createDefaultValue(newItemSchema);
     onChange(name, [...arrayValue, newItem]);
@@ -57,7 +59,10 @@ const ArrayField = ({ name, schema, value, onChange, error }) => {
 
   const handleRemove = useCallback(
     (index) => {
+      console.log('Removing item at index:', index);
+      console.log('Current array value:', arrayValue);
       const newArrayValue = arrayValue.filter((_, i) => i !== index);
+      console.log('New array value:', newArrayValue);
       onChange(name, newArrayValue);
     },
     [arrayValue, onChange, name]
@@ -66,6 +71,7 @@ const ArrayField = ({ name, schema, value, onChange, error }) => {
   const onDragEnd = useCallback(
     (result) => {
       if (!result.destination) return;
+      console.log('onDragEnd called with:', result);
       const items = Array.from(arrayValue);
       const [reorderedItem] = items.splice(result.source.index, 1);
       items.splice(result.destination.index, 0, reorderedItem);
@@ -90,7 +96,17 @@ const ArrayField = ({ name, schema, value, onChange, error }) => {
           name={`${name}[${index}]`}
           schema={itemSchema}
           value={item}
-          onChange={(_, newValue) => handleItemChange(index, newValue)}
+          onChange={(_, newValue) => {
+            console.log('FormField onChange called with:', _, newValue);
+            if (typeof handleItemChange !== 'function') {
+              console.error(
+                'handleItemChange is not a function:',
+                handleItemChange
+              );
+              return;
+            }
+            handleItemChange(index, newValue);
+          }}
           error={error && error[index]}
         />
       );

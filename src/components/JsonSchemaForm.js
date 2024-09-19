@@ -79,10 +79,19 @@ const JsonSchemaForm = forwardRef(
     const memoizedHandleSubmit = useCallback(async () => {
       const validationResult = validateAllFields();
       if (validationResult.isValid) {
-        return handleSubmit(formData);
+        try {
+          if (typeof onSubmit !== 'function') {
+            console.warn('onSubmit is not provided or is not a function');
+            return true; // Return true to indicate successful validation
+          }
+          return await handleSubmit(formData);
+        } catch (error) {
+          console.error('Form submission error:', error);
+          return false;
+        }
       }
       return false;
-    }, [handleSubmit, formData, validateAllFields]);
+    }, [handleSubmit, formData, validateAllFields, onSubmit]);
 
     const memoizedHandleChange = useCallback(
       (name, value) => {
@@ -136,9 +145,9 @@ const JsonSchemaForm = forwardRef(
     );
 
     const handleFormSubmit = useCallback(
-      (event) => {
+      async (event) => {
         event.preventDefault();
-        return memoizedHandleSubmit();
+        return await memoizedHandleSubmit();
       },
       [memoizedHandleSubmit]
     );

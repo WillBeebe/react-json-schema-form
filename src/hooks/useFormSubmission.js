@@ -14,6 +14,10 @@ export const useFormSubmission = (onSubmit, validateAllFields) => {
       const validationResult = validateAllFields();
       if (validationResult.isValid) {
         try {
+          if (typeof onSubmit !== 'function') {
+            console.warn('onSubmit is not provided or is not a function');
+            return true; // Return true to indicate successful validation
+          }
           await onSubmit(formData);
           setSnackbar({
             open: true,
@@ -21,11 +25,13 @@ export const useFormSubmission = (onSubmit, validateAllFields) => {
             severity: 'success',
           });
         } catch (error) {
+          console.error('Form submission error:', error);
           setSnackbar({
             open: true,
-            message: 'Error submitting form. Please try again.',
+            message: `Error submitting form: ${error.message}`,
             severity: 'error',
           });
+          return false;
         }
       } else {
         setSnackbar({
@@ -33,8 +39,10 @@ export const useFormSubmission = (onSubmit, validateAllFields) => {
           message: 'Please correct the errors in the form.',
           severity: 'error',
         });
+        return false;
       }
       setIsSubmitting(false);
+      return true;
     },
     [onSubmit, validateAllFields]
   );
